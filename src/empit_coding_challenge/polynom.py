@@ -1,4 +1,5 @@
 from typing import Self
+from dataclasses import dataclass
 
 
 class Polynom(list):
@@ -87,3 +88,12 @@ class Polynom(list):
 class IntegralSolver:
     @staticmethod
     def integrate(polynom: Polynom, interval: tuple[float, float]) -> float: ...
+
+
+@dataclass
+class SolverMetadata:
+    result: float
+    tolerance: float | None = None
+    tolerance_reached: bool | None = None
+    n_samples_used: int | None = None
+    execution_time: float | None = None
