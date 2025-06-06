@@ -9,7 +9,7 @@ POLYN_HELP_MSG = "List of coefficients in ascending order, separated by spaces (
 
 
 def main():
-    sys.setrecursionlimit(100)  # Set recursion limit to 100
+    sys.setrecursionlimit(1000)  # Set recursion limit to 100
 
     parser = argparse.ArgumentParser(
         prog="poly", description="Polynomial operations CLI tool."
@@ -46,26 +46,20 @@ def main():
     integration_parser = subparsers.add_parser(name="integration")
     integration_parser.add_argument("p1")
 
-    integration_parser.set_defaults(func=Routines.integrate_polynom)
-    integration_parser.add_argument(
-        "interval",
-        nargs=2,
-        type=float,
-        help="Integration interval as two floats: start end",
+    integrate_all_parser = subparsers.add_parser("integrate_all")
+    integrate_all_parser.add_argument(
+        "--p1", nargs="+", type=float, required=True, help="Polynomial coefficients"
     )
-    integration_parser.add_argument(
-        "-s",
-        "--solver",
-        choices=[
-            "analytic",
-            "numeric-v1",
-            "numeric-v2",
-            "montecarlo-v1",
-            "montecarlo-v2",
-        ],
-        default="analytic",
-        help="Select the integration solver to use (default: analytic)",
+    integrate_all_parser.add_argument(
+        "--interval", nargs=2, required=True, help="Integration interval (a b)"
     )
+    integrate_all_parser.add_argument(
+        "--tol", type=float, default=1e-6, help="Tolerance"
+    )
+    integrate_all_parser.add_argument(
+        "--timeout", type=int, default=3, help="Timeout per solver in seconds"
+    )
+    integrate_all_parser.set_defaults(func=Routines.integrate_all)
 
     # create a Polynom from a list of cofficients given in the cl
     # create an interval for integrating from arguments given in the cl
