@@ -1,22 +1,6 @@
 from .polynom import Polynom
-from .solvers import (
-    IntegralSolver,
-    AnalyticSolver,
-    NewtonCoteSolver,
-    NewtonCoteMP,
-    SolverName,
-    SOLVER_MAP,
-    MonteCarlo,
-)
+from .solvers import AnalyticSolver, SOLVER_MAP, SolverName
 from .utils import AdaptiveIntegration
-
-
-class TimeoutException(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise TimeoutException()
 
 
 class Routines:
@@ -47,7 +31,7 @@ class Routines:
 
     @staticmethod
     def integrate(args):
-        polynom = Polynom(args.p1)
+        poly = Polynom(args.p1)
         interval = tuple(args.interval)
         solver = SOLVER_MAP.get(args.solver)
         tolerance = args.tol
@@ -62,13 +46,16 @@ class Routines:
         }
         solver_kwargs = {k: kwargs[k] for k in solver.expected_kwargs}
         timeout = args.timeout
-        analytic_solution = AnalyticSolver.integrate(polynom, interval)
+        analytic_solution = AnalyticSolver.integrate(poly, interval)
+        a, b = interval
+        print(f"Integrating Polynomial {poly} in interval [{a}, {b}]")
+        print()
         print(f"Executing [{args.solver.upper()}]")
         print(f"Description:")
-        print(solver.description)
+        print(" " * 2 + f"{solver.description}")
         print()
         result, error, elapsed, n_samples, is_success = AdaptiveIntegration.refine(
-            polynom=polynom,
+            polynom=poly,
             solver=solver,
             interval=interval,
             analytic_solution=analytic_solution,
@@ -91,4 +78,48 @@ class Routines:
         interval = tuple(args.interval)
         tol = args.tol
         timeout = args.timeout
-        start_n_intervals = args.start_n_intervals
+        a, b = interval
+        print(f"Integrating Polynomial {poly} in interval [{a}, {b}]")
+        print()
+        for solver_name in SolverName:
+            solver = SOLVER_MAP.get(solver_name)
+            if solver is None:
+                print(
+                    f"Solver {solver_name} not implemented in SOLVER_MAP. Skipping.\n"
+                )
+                continue
+
+            kwargs = {
+                "_seed": args.seed,
+                "n_samples": args.start_n,
+                "n_subintervals": args.start_n,
+                "batch_size": args.batch_size,
+            }
+            solver_kwargs = {
+                k: kwargs[k] for k in solver.expected_kwargs if k in kwargs
+            }
+            analytic_solution = AnalyticSolver.integrate(poly, interval)
+
+            print(f"Executing [{solver_name}]")
+            print("Description:")
+            print(" " * 2 + f"{solver.description.strip()}")
+            print()
+
+            result, error, elapsed, n_samples, is_success = AdaptiveIntegration.refine(
+                polynom=poly,
+                solver=solver,
+                interval=interval,
+                analytic_solution=analytic_solution,
+                tolerance=tol,
+                timeout=timeout,
+                solver_kwargs=solver_kwargs,
+            )
+
+            print(" " * 2 + f"Final Result           = {result:.6f}")
+            print(" " * 2 + f"Final Error            = {error:.2e}%")
+            print(" " * 2 + f"Total Time Elapsed     = {elapsed:.3f}s")
+            print(" " * 2 + f"Number Of Samples      = {n_samples:.1e}")
+            print(" " * 2 + f"Error within Tolerance = {is_success}")
+            print()
+            print(" " * 2 + "-" * 50)
+            print()

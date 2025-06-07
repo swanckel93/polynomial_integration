@@ -9,6 +9,8 @@ dist/
 *.egg-info/
 *.egg
 *.whl
+data/plots/*
+data/sample_runs/*
 
 # Virtual environments
 .venv/

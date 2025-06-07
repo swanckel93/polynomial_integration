@@ -103,7 +103,8 @@ class AdaptiveIntegration:
     ) -> tuple[float, float, float, float, bool]:
         start_time = timeit.default_timer()
         elapsed = 0.0
-        curr_n = solver_kwargs["n_subintervals"]
+        curr_n = solver_kwargs.get("n_subintervals") or solver_kwargs.get("n_samples")
+        assert curr_n is not None
         result = None
         is_success = False
         error = None

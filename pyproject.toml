@@ -19,6 +19,8 @@ packages = [{include = "empit_coding_challenge", from = "src"}]
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 black = "^25.1.0"
+matplotlib = "^3.10.3"
+seaborn = "^0.13.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

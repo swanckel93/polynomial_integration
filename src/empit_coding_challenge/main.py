@@ -102,10 +102,22 @@ def main():
         "--timeout", type=int, default=30, help="Timeout per solver in seconds"
     )
     integrate_all_parser.add_argument(
-        "--start_n_intervals",
+        "--start_n",
         type=int,
         default=10,
-        help="Starting number of subintervals",
+        help="Initial number of subintervals. For Monte Carlo-> Initial sample numbers.",
+    )
+    integrate_all_parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Required for Montecarlo",
+    )
+    integrate_all_parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=1024,
+        help="Batch size of multi process solvers",
     )
     integrate_all_parser.set_defaults(func=Routines.integrate_all)
 

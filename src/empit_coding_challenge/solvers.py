@@ -115,54 +115,55 @@ class BooleSolver(NewtonCoteSolver):
         )
 
 
-# class MidpointRecursive(IntegralSolver):
-#     @classmethod
-#     def integrate(
-#         cls,
-#         polynom: Polynom,
-#         interval: tuple[float, float],
-#         tol=1e-6,
-#         max_depth=90,
-#         depth=0,
-#         max_reached_depth: list[int] | None = None,
-#     ) -> float:
-#         if max_reached_depth is None:
-#             max_reached_depth = [0]
+# Recursive function works. But not included in the CLI. properties are too different and would make the cli hacky.
+class MidpointRecursive(IntegralSolver):
+    @classmethod
+    def integrate(
+        cls,
+        polynom: Polynom,
+        interval: tuple[float, float],
+        tol=1e-6,
+        max_depth=90,
+        depth=0,
+        max_reached_depth: list[int] | None = None,
+    ) -> float:
+        if max_reached_depth is None:
+            max_reached_depth = [0]
 
-#         max_reached_depth[0] = max(max_reached_depth[0], depth)
-#         a, b = interval
-#         mid = (a + b) / 2
-#         h = b - a
+        max_reached_depth[0] = max(max_reached_depth[0], depth)
+        a, b = interval
+        mid = (a + b) / 2
+        h = b - a
 
-#         # Midpoint rule estimates
-#         full = polynom(mid) * h
-#         left = polynom((a + mid) / 2) * (h / 2)
-#         right = polynom((mid + b) / 2) * (h / 2)
-#         refined = left + right
+        # Midpoint rule estimates
+        full = polynom(mid) * h
+        left = polynom((a + mid) / 2) * (h / 2)
+        right = polynom((mid + b) / 2) * (h / 2)
+        refined = left + right
 
-#         # Stop condition
-#         if abs(refined - full) < tol or depth >= max_depth:
-#             return refined
+        # Stop condition
+        if abs(refined - full) < tol or depth >= max_depth:
+            return refined
 
-#         # Recursive subdivision
-#         left_result = cls.integrate(
-#             polynom,
-#             (a, mid),
-#             tol=tol / 2,
-#             max_depth=max_depth,
-#             depth=depth + 1,
-#         )
-#         right_result = cls.integrate(
-#             polynom,
-#             (mid, b),
-#             tol=tol / 2,
-#             max_depth=max_depth,
-#             depth=depth + 1,
-#         )
+        # Recursive subdivision
+        left_result = cls.integrate(
+            polynom,
+            (a, mid),
+            tol=tol / 2,
+            max_depth=max_depth,
+            depth=depth + 1,
+        )
+        right_result = cls.integrate(
+            polynom,
+            (mid, b),
+            tol=tol / 2,
+            max_depth=max_depth,
+            depth=depth + 1,
+        )
 
-#         result = left_result + right_result
+        result = left_result + right_result
 
-#         return result
+        return result
 
 
 class NewtonCoteMP(IntegralSolver):
@@ -215,6 +216,11 @@ class NewtonCoteMP(IntegralSolver):
 
 
 class MidpointMP(NewtonCoteMP):
+    description = """ 
+    apply (b - a) * f((a + b)/2) 
+    over subintervals
+    """
+
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
@@ -225,6 +231,11 @@ class MidpointMP(NewtonCoteMP):
 
 
 class TrapezoidalMP(NewtonCoteMP):
+    description = """ 
+    apply (b - a) * f((a + b)/2) 
+    over subintervals
+    """
+
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
@@ -234,6 +245,11 @@ class TrapezoidalMP(NewtonCoteMP):
 
 
 class SimpsonMP(NewtonCoteMP):
+    description = """ 
+    apply (b - a) * f((a + b)/2) 
+    over subintervals
+    """
+
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
@@ -244,6 +260,11 @@ class SimpsonMP(NewtonCoteMP):
 
 
 class Simpson38MP(NewtonCoteMP):
+    description = """ 
+    apply (b - a) * f((a + b)/2) 
+    over subintervals
+    """
+
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
@@ -255,6 +276,11 @@ class Simpson38MP(NewtonCoteMP):
 
 
 class BooleMP(NewtonCoteMP):
+    description = """ 
+    apply (b - a) * f((a + b)/2) 
+    over subintervals
+    """
+
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
@@ -279,6 +305,10 @@ class BooleMP(NewtonCoteMP):
 
 class MonteCarlo(IntegralSolver):
     expected_kwargs = {"n_samples", "_seed"}
+    description = """ 
+    Estimates ∫[a,b] f(x) dx by uniformly sampling points in [a, b].
+    Computes the average of f(x) over n_samples random x-values, scaled by (b - a).
+    """
 
     @staticmethod
     def integrate(
@@ -315,9 +345,6 @@ SOLVER_GROUP_MAP = {
     MonteCarlo: [
         MonteCarlo,
     ],
-    # IntegralSolver: [
-    #     MidpointRecursive,
-    # ],
 }
 
 
@@ -330,9 +357,9 @@ class SolverName(StrEnum):
     MIDPOINT_MP = "MIDPOINT-MP"
     TRAPEZ_MP = "TRAPEZ-MP"
     SIMPSON_MP = "SIMPSON-MP"
-    SIMPSON382_MP = "SIMPSON382-MP"
+    SIMPSON38_MP = "SIMPSON38-MP"
     BOOLE_MP = "BOOLE-MP"
-    # MIDPOINT_RECURSIVE = enum.auto()
+    MONTECARLO = "MONTECARLO"
 
 
 SOLVER_MAP = {
@@ -344,7 +371,7 @@ SOLVER_MAP = {
     SolverName.MIDPOINT_MP: MidpointMP,
     SolverName.TRAPEZ_MP: TrapezoidalMP,
     SolverName.SIMPSON_MP: SimpsonMP,
-    SolverName.SIMPSON38: Simpson38MP,
+    SolverName.SIMPSON38_MP: Simpson38MP,
     SolverName.BOOLE_MP: BooleMP,
-    # SolverName.MIDPOINT_RECURSIVE: MidpointRecursive,
+    SolverName.MONTECARLO: MonteCarlo,
 }
