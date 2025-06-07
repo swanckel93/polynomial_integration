@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.empit_coding_challenge.utils import (
+from src.polynomials.utils import (
     Stats,
 )
 

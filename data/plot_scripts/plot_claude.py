@@ -60,8 +60,8 @@ def parse_integration_output(filepath: Path) -> IntegrationData:
     interval_end = float(poly_match.group(3)) if poly_match else 1.0
     interval = (interval_start, interval_end)
 
-    # Extract tolerance from command line (assuming 1e-5 from the command)
-    tol_match = re.search(r"--tol (\S+)", content)
+    # Extract tolerance from command line --tol argument
+    tol_match = re.search(r"--tol\s+([0-9\.e+-]+)", content)
     tolerance = float(tol_match.group(1)) if tol_match else 1e-5
 
     # Split content by solver sections
@@ -98,7 +98,7 @@ def parse_integration_output(filepath: Path) -> IntegrationData:
             partial_results.append(
                 PartialResult(
                     result=float(match[0]),
-                    error=float(match[1]),
+                    error=float(match[1]),  # Already in percentage
                     samples=float(match[2]),
                     time=float(match[3]),
                 )
@@ -119,7 +119,9 @@ def parse_integration_output(filepath: Path) -> IntegrationData:
         )
 
         final_result = float(final_result_match.group(1)) if final_result_match else 0.0
-        final_error = float(final_error_match.group(1)) if final_error_match else 0.0
+        final_error = (
+            float(final_error_match.group(1)) if final_error_match else 0.0
+        )  # Already in percentage
         total_time = float(total_time_match.group(1)) if total_time_match else 0.0
         final_samples = (
             float(final_samples_match.group(1)) if final_samples_match else 0.0
@@ -163,6 +165,10 @@ def create_integration_plot(data: IntegrationData, save_path: Path) -> None:
     # Colors for different methods
     colors = plt.cm.tab10(np.linspace(0, 1, len(data.solver_results)))
 
+    # Collect all times and errors for proper axis limits
+    all_times = []
+    all_errors = []
+
     # Plot each method
     for i, solver in enumerate(data.solver_results):
         # Collect all time and error points (partial + final)
@@ -184,6 +190,10 @@ def create_integration_plot(data: IntegrationData, save_path: Path) -> None:
             times.append(solver.total_time)
             errors.append(solver.final_error)
             samples.append(solver.final_samples)
+
+        # Add to global lists for axis limits
+        all_times.extend(times)
+        all_errors.extend(errors)
 
         # Handle zero errors for logarithmic scale
         plot_errors = [max(err, 1e-10) if err == 0 else err for err in errors]
@@ -213,13 +223,13 @@ def create_integration_plot(data: IntegrationData, save_path: Path) -> None:
                     bbox=dict(boxstyle="round,pad=0.2", facecolor=colors[i], alpha=0.3),
                 )
 
-    # Add tolerance line
+    # Add tolerance line (tolerance is already in percentage)
     ax.axhline(
-        y=data.tolerance * 100,
+        y=data.tolerance,
         color="red",
         linestyle="--",
         linewidth=2,
-        label=f"Tolerance ({data.tolerance:.0e})",
+        label=f"Tolerance ({data.tolerance:.0e}%)",
         alpha=0.8,
     )
 
@@ -245,15 +255,28 @@ def create_integration_plot(data: IntegrationData, save_path: Path) -> None:
     # Adjust layout to prevent legend cutoff
     plt.tight_layout()
 
-    # Set axis limits for better visualization
-    all_times = [solver.total_time for solver in data.solver_results] + [
-        partial.time
-        for solver in data.solver_results
-        for partial in solver.partial_results
-    ]
-    max_time = max(all_times) if all_times else 1
-    ax.set_xlim(-0.1, max_time * 1.1)
-    ax.set_ylim(1e-10, 1e2)
+    # Set axis limits to show all points with some margin
+    if all_times:
+        min_time = min(all_times)
+        max_time = max(all_times)
+        # Add margin for log scale
+        time_margin = (
+            0.1 * (max_time - min_time) if max_time > min_time else max_time * 0.1
+        )
+        ax.set_xlim(max(min_time - time_margin, min_time * 0.5), max_time + time_margin)
+
+    if all_errors:
+        # Filter out zero errors for limit calculation
+        non_zero_errors = [err for err in all_errors if err > 0]
+        if non_zero_errors:
+            min_error = min(non_zero_errors)
+            max_error = max(all_errors)
+            # Add margin for log scale
+            ax.set_ylim(min_error * 0.1, max_error * 10)
+        else:
+            ax.set_ylim(1e-10, 1e2)
+    else:
+        ax.set_ylim(1e-10, 1e2)
 
     # Save the plot
     save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -264,7 +287,7 @@ def create_integration_plot(data: IntegrationData, save_path: Path) -> None:
 def main():
     """Main function to process the integration output and create plot."""
 
-    filename = "polynomial_10_interval_10000.txt"
+    filename = "only_midpoint_mp.txt"
     fpath = Path(__file__).parents[1] / "sample_runs"
     dstpath = Path(__file__).parents[1] / "plots"
 
@@ -279,6 +302,7 @@ def main():
 
     print(f"Plot saved to: {output_file}")
     print(f"Parsed {len(data.solver_results)} solver results")
+    print(f"Extracted tolerance: {data.tolerance}%")
 
 
 if __name__ == "__main__":

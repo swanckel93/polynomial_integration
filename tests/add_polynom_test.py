@@ -1,5 +1,5 @@
 import pytest
-from src.empit_coding_challenge.polynom import Polynom
+from src.polynomials.polynom import Polynom
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,6 @@
 import pytest
-from src.empit_coding_challenge.polynom import Polynom
-from src.empit_coding_challenge.solvers import AnalyticSolver
+from src.polynomials.polynom import Polynom
+from src.polynomials.solvers import AnalyticSolver
 
 
 @pytest.mark.parametrize(

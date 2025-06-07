@@ -1,0 +1,318 @@
+{
+  "polynomial_coefficients": [
+    1.0,
+    0.0,
+    1.0
+  ],
+  "polynomial_string": "1.0+1.0*x^2",
+  "interval_start": -1.0,
+  "interval_end": 1.0,
+  "analytic_solution": 2.6666666666666665,
+  "tolerance": 0.0001,
+  "timeout": 20,
+  "start_n": 10,
+  "seed": 42,
+  "batch_size": 64,
+  "timestamp": "2025-06-07T19:00:05.631807",
+  "solver_results": [
+    {
+      "name": "MIDPOINT",
+      "description": "\u222b[a,b] f(x) dx \u2248 (b - a) * f((a + b) / 2)",
+      "partial_results": [
+        {
+          "result": 2.6599999999999997,
+          "error": 0.2500000000000058,
+          "samples": 10,
+          "time_elapsed": 2.0076000510016456e-05
+        },
+        {
+          "result": 2.6666000000000016,
+          "error": 0.0024999999999331113,
+          "samples": 100,
+          "time_elapsed": 0.0009311350004281849
+        },
+        {
+          "result": 2.6666660000000033,
+          "error": 2.4999999870267686e-05,
+          "samples": 1000,
+          "time_elapsed": 0.0019310560019221157
+        }
+      ],
+      "final_result": 2.6666660000000033,
+      "final_error": 2.4999999870267686e-05,
+      "total_time": 0.0019310560019221157,
+      "final_samples": 1000,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "TRAPEZ",
+      "description": "\u222b[a,b] f(x) dx \u2248 (b - a) / 2 * (f(a) + f(b))",
+      "partial_results": [
+        {
+          "result": 2.6799999999999997,
+          "error": 0.4999999999999949,
+          "samples": 10,
+          "time_elapsed": 1.645600059418939e-05
+        },
+        {
+          "result": 2.6668000000000016,
+          "error": 0.005000000000066063,
+          "samples": 100,
+          "time_elapsed": 0.0007851869995647576
+        },
+        {
+          "result": 2.6666680000000045,
+          "error": 5.000000017352235e-05,
+          "samples": 1000,
+          "time_elapsed": 0.0019542970003385562
+        }
+      ],
+      "final_result": 2.6666680000000045,
+      "final_error": 5.000000017352235e-05,
+      "total_time": 0.0019542970003385562,
+      "final_samples": 1000,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "SIMPSON",
+      "description": "\u222b[a,b] f(x) dx \u2248 (b - a) / 6 * (f(a) + 4f((a + b)/2) + f(b))",
+      "partial_results": [
+        {
+          "result": 2.666666666666666,
+          "error": 1.6653345369377348e-14,
+          "samples": 10,
+          "time_elapsed": 1.766599962138571e-05
+        }
+      ],
+      "final_result": 2.666666666666666,
+      "final_error": 1.6653345369377348e-14,
+      "total_time": 1.766599962138571e-05,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "SIMPSON38",
+      "description": "Let h = (b - a) / 3,\n    \u222b[a,b] f(x) dx \u2248 (b - a) / 8 * [f(a) + 3f(a + h) + 3f(a + 2h) + f(b)]",
+      "partial_results": [
+        {
+          "result": 2.666666666666667,
+          "error": 1.6653345369377348e-14,
+          "samples": 10,
+          "time_elapsed": 2.08630008273758e-05
+        }
+      ],
+      "final_result": 2.666666666666667,
+      "final_error": 1.6653345369377348e-14,
+      "total_time": 2.08630008273758e-05,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "BOOLE",
+      "description": "Let h = (b - a) / 4,\n    \u222b[a,b] f(x) dx \u2248 (b - a) / 90 * [7f(a) + 32f(a + h) + 12f(a + 2h) + 32f(a + 3h) + 7f(b)]",
+      "partial_results": [
+        {
+          "result": 2.6666666666666665,
+          "error": 0.0,
+          "samples": 10,
+          "time_elapsed": 2.4122000468196347e-05
+        }
+      ],
+      "final_result": 2.6666666666666665,
+      "final_error": 0.0,
+      "total_time": 2.4122000468196347e-05,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "MIDPOINT-MP",
+      "description": "apply (b - a) * f((a + b)/2) \n    over subintervals",
+      "partial_results": [
+        {
+          "result": 2.66,
+          "error": 0.24999999999998912,
+          "samples": 10,
+          "time_elapsed": 0.03621943299731356
+        },
+        {
+          "result": 2.6666000000000007,
+          "error": 0.002499999999966418,
+          "samples": 100,
+          "time_elapsed": 0.06358956599797239
+        },
+        {
+          "result": 2.6666659999999998,
+          "error": 2.500000000349445e-05,
+          "samples": 1000,
+          "time_elapsed": 0.09044580399859115
+        }
+      ],
+      "final_result": 2.6666659999999998,
+      "final_error": 2.500000000349445e-05,
+      "total_time": 0.09044580399859115,
+      "final_samples": 1000,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "TRAPEZ-MP",
+      "description": "apply (b - a) * f((a + b)/2) \n    over subintervals",
+      "partial_results": [
+        {
+          "result": 2.6799999999999997,
+          "error": 0.4999999999999949,
+          "samples": 10,
+          "time_elapsed": 0.020551616999000544
+        },
+        {
+          "result": 2.6667999999999994,
+          "error": 0.004999999999982796,
+          "samples": 100,
+          "time_elapsed": 0.04098628999781795
+        },
+        {
+          "result": 2.6666680000000005,
+          "error": 5.0000000023642244e-05,
+          "samples": 1000,
+          "time_elapsed": 0.06314994299827958
+        }
+      ],
+      "final_result": 2.6666680000000005,
+      "final_error": 5.0000000023642244e-05,
+      "total_time": 0.06314994299827958,
+      "final_samples": 1000,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "SIMPSON-MP",
+      "description": "apply (b - a) * f((a + b)/2) \n    over subintervals",
+      "partial_results": [
+        {
+          "result": 2.6666666666666665,
+          "error": 0.0,
+          "samples": 10,
+          "time_elapsed": 0.019234355000662617
+        }
+      ],
+      "final_result": 2.6666666666666665,
+      "final_error": 0.0,
+      "total_time": 0.019234355000662617,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "SIMPSON38-MP",
+      "description": "apply (b - a) * f((a + b)/2) \n    over subintervals",
+      "partial_results": [
+        {
+          "result": 2.6666666666666665,
+          "error": 0.0,
+          "samples": 10,
+          "time_elapsed": 0.018019273000390967
+        }
+      ],
+      "final_result": 2.6666666666666665,
+      "final_error": 0.0,
+      "total_time": 0.018019273000390967,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "BOOLE-MP",
+      "description": "apply (b - a) * f((a + b)/2) \n    over subintervals",
+      "partial_results": [
+        {
+          "result": 2.6666666666666665,
+          "error": 0.0,
+          "samples": 10,
+          "time_elapsed": 0.017454339998948853
+        }
+      ],
+      "final_result": 2.6666666666666665,
+      "final_error": 0.0,
+      "total_time": 0.017454339998948853,
+      "final_samples": 10,
+      "within_tolerance": true,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "name": "MONTECARLO",
+      "description": "Estimates \u222b[a,b] f(x) dx by uniformly sampling points in [a, b].\n    Computes the average of f(x) over n_samples random x-values, scaled by (b - a).",
+      "partial_results": [
+        {
+          "result": 2.80882500819184,
+          "error": 5.3309378071939975,
+          "samples": 10,
+          "time_elapsed": 3.5242999729234725e-05
+        },
+        {
+          "result": 2.6925957122130035,
+          "error": 0.9723392079876381,
+          "samples": 100,
+          "time_elapsed": 0.0008460839999315795
+        },
+        {
+          "result": 2.66331894322089,
+          "error": 0.12553962921661443,
+          "samples": 1000,
+          "time_elapsed": 0.0018590409999887925
+        },
+        {
+          "result": 2.662075268477897,
+          "error": 0.17217743207885716,
+          "samples": 10000,
+          "time_elapsed": 0.005407584001659416
+        },
+        {
+          "result": 2.668339514781643,
+          "error": 0.06273180431162206,
+          "samples": 100000,
+          "time_elapsed": 0.035526619001757354
+        },
+        {
+          "result": 2.665829787906286,
+          "error": 0.03138295351426956,
+          "samples": 1000000,
+          "time_elapsed": 0.33762812500208383
+        },
+        {
+          "result": 2.666618402806906,
+          "error": 0.001809894741011675,
+          "samples": 10000000,
+          "time_elapsed": 3.4014504910010146
+        },
+        {
+          "result": 2.6666838520053506,
+          "error": 0.0006444502006541786,
+          "samples": 100000000,
+          "time_elapsed": 34.17508933600038
+        }
+      ],
+      "final_result": 2.6666838520053506,
+      "final_error": 0.0006444502006541786,
+      "total_time": 34.17508933600038,
+      "final_samples": 100000000,
+      "within_tolerance": false,
+      "success": true,
+      "error_message": null
+    }
+  ]
+}
