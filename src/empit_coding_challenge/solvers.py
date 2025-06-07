@@ -185,8 +185,12 @@ class NewtonCoteMP(IntegralSolver):
 
         vpoly = np.vectorize(polynom, otypes=[float])
         args = [(batch, vpoly) for batch in batches]
+        if os.cpu_count() is None:
+            n_pools = 4
+        else:
+            cpu_count = os.cpu_count()
+            n_pools = int(cpu_count * 0.75)  # type: ignore
 
-        n_pools = os.cpu_count() or 4
         with mp.Pool(n_pools) as pool:
             results = pool.starmap(cls.integrate_batch, args)
 
