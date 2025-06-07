@@ -69,8 +69,13 @@ class Polynom(list):
             return "0"
         return "".join((terms))
 
-    def integrate(self, interval: tuple[float, float], solver: "IntegralSolver"):
-        return solver.integrate(self, interval)
+    def integrate(
+        self,
+        interval: tuple[float, float],
+        solver: "IntegralSolver",
+        **kwargs,
+    ):
+        return solver.integrate(self, interval, **kwargs)
 
     @staticmethod
     def parse_from_string(input_str: str) -> list[float]:
@@ -86,14 +91,9 @@ class Polynom(list):
 
 
 class IntegralSolver:
+    expected_kwargs = {}
+
     @staticmethod
-    def integrate(polynom: Polynom, interval: tuple[float, float]) -> float: ...
-
-
-@dataclass
-class SolverMetadata:
-    result: float
-    tolerance: float | None = None
-    tolerance_reached: bool | None = None
-    n_samples_used: int | None = None
-    execution_time: float | None = None
+    def integrate(
+        polynom: Polynom, interval: tuple[float, float], **kwargs
+    ) -> float: ...

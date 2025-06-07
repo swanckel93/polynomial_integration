@@ -1,6 +1,6 @@
 import argparse
 import sys
-from .polynom import Polynom
+from .solvers import Polynom, SolverName
 from .routines import Routines
 
 # from .solvers import ...
@@ -43,21 +43,69 @@ def main():
     multiplication_parser.add_argument("p2", help=POLYN_HELP_MSG)
     multiplication_parser.set_defaults(func=Routines.multiply_polynom)
 
-    integration_parser = subparsers.add_parser(name="integration")
-    integration_parser.add_argument("p1")
+    integration_parser = subparsers.add_parser("integrate")
+    integration_parser.add_argument(
+        "--p1", nargs="+", type=float, help="Polynomial coefficients in ascending order"
+    )
+    integration_parser.add_argument(
+        "--solver",
+        required=True,
+        choices=[e.value for e in SolverName],
+        help="Name of the solver to use (choices: %(choices)s)",
+    )
+    integration_parser.add_argument(
+        "--interval",
+        nargs=2,
+        type=float,
+        required=True,
+        help="Integration interval (a b)",
+    )
+    integration_parser.add_argument("--tol", type=float, default=1e-6, help="Tolerance")
+    integration_parser.add_argument(
+        "--timeout", type=int, default=10, help="Timeout in seconds"
+    )
+    integration_parser.add_argument(
+        "--start_n",
+        type=int,
+        default=10,
+        help="Initial number of subintervals. For Monte Carlo-> Initial sample numbers.",
+    )
+    integration_parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Required for Montecarlo",
+    )
+    integration_parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=1024,
+        help="Batch size of multi process solvers",
+    )
+    integration_parser.set_defaults(func=Routines.integrate)
 
     integrate_all_parser = subparsers.add_parser("integrate_all")
     integrate_all_parser.add_argument(
         "--p1", nargs="+", type=float, required=True, help="Polynomial coefficients"
     )
     integrate_all_parser.add_argument(
-        "--interval", nargs=2, required=True, help="Integration interval (a b)"
+        "--interval",
+        nargs=2,
+        type=float,
+        required=True,
+        help="Integration interval (a b)",
     )
     integrate_all_parser.add_argument(
         "--tol", type=float, default=1e-6, help="Tolerance"
     )
     integrate_all_parser.add_argument(
-        "--timeout", type=int, default=3, help="Timeout per solver in seconds"
+        "--timeout", type=int, default=30, help="Timeout per solver in seconds"
+    )
+    integrate_all_parser.add_argument(
+        "--start_n_intervals",
+        type=int,
+        default=10,
+        help="Starting number of subintervals",
     )
     integrate_all_parser.set_defaults(func=Routines.integrate_all)
 

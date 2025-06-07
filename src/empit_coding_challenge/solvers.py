@@ -1,19 +1,13 @@
 from .polynom import Polynom, IntegralSolver
-from .utils import Stats
 import random
 import statistics
 import math
 import multiprocessing as mp
 import os
 import numpy as np
-from dataclasses import dataclass
-from typing import Callable, Optional
-
-
-@dataclass
-class SolverMeta:
-    result: Optional[float] = None
-    execution_time: Optional[float] = None
+from typing import Callable
+from strenum import StrEnum
+import enum
 
 
 class AnalyticSolver(IntegralSolver):
@@ -21,190 +15,275 @@ class AnalyticSolver(IntegralSolver):
     def integrate(
         polynom: Polynom,
         interval: tuple[float, float],
-        meta: Optional[SolverMeta],
     ) -> float:
         "Analytic integration, assuming Offset == 0"
         F_0 = Polynom([0] + [val / (index + 1) for index, val in enumerate(polynom)])
         result = F_0(interval[1]) - F_0(interval[0])
-        if meta is not None:
-            meta.result = result
         return result
 
 
-@dataclass
-class NumericV1Meta(SolverMeta):
-    n_subintervals: Optional[int] = None
-    step_size: Optional[float] = None
+class NewtonCoteSolver(IntegralSolver):
+    expected_kwargs = {"n_subintervals"}
 
+    @classmethod
+    def integrate(
+        cls,
+        polynom: Polynom,
+        interval: tuple[float, float],
+        n_subintervals: int,
+    ) -> float:
+        a, b = interval
+        h = (b - a) / n_subintervals
+        total = 0.0
 
-class NumericV1(IntegralSolver):
+        for i in range(n_subintervals):
+            sub_a = a + i * h
+            sub_b = sub_a + h
+            total += cls._apply_rule(polynom, sub_a, sub_b)
+
+        return total
+
     @staticmethod
-    def integrate(
-        polynom: Polynom,
-        interval: tuple[float, float],
-        meta: Optional[NumericV1Meta],
-        n_samples: int,
-    ) -> float:
-        a, b = interval
-        step_size = (b - a) / n_samples
-        mid_points = [a + step_size * (i + 0.5) for i in range(int(n_samples))]
-        Y = [polynom(x_mid) for x_mid in mid_points]
-        result = sum(Y) * step_size
-        if meta is not None:
-            meta.result = result
-            meta.n_subintervals = n_samples
-            meta.step_size = step_size
-        return result
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
+        raise NotImplementedError("Subclasses must implement _apply_rule()")
 
 
-@dataclass
-class NumericRecursiveMeta(SolverMeta):
-    tolerance_achieved: float | None = None
-    depth: int | None = None
-    is_within_tolerance: bool | None = None
+class MidpointSolver(NewtonCoteSolver):
+    description = "∫[a,b] f(x) dx ≈ (b - a) * f((a + b) / 2)"
 
-
-class NumericRecursive(IntegralSolver):
-    @classmethod
-    def integrate(
-        cls,
-        polynom: Polynom,
-        interval: tuple[float, float],
-        meta: Optional[NumericRecursiveMeta],
-        tol=1e-6,
-        max_depth=90,
-        depth=0,
-    ) -> float:
-        a, b = interval
+    @staticmethod
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
         mid = (a + b) / 2
-        h = b - a
+        return (b - a) * polynom(mid)
 
-        # Midpoint rule estimates
-        full = polynom(mid) * h
-        left = polynom((a + mid) / 2) * (h / 2)
-        right = polynom((mid + b) / 2) * (h / 2)
-        refined = left + right
 
-        # Stop condition
-        if abs(refined - full) < tol or depth >= max_depth:
-            return refined
+class TrapezoidalSolver(NewtonCoteSolver):
+    description = "∫[a,b] f(x) dx ≈ (b - a) / 2 * (f(a) + f(b))"
 
-        # Recursive subdivision
-        left_result = cls.integrate(
-            polynom,
-            (a, mid),
-            meta,
-            tol=tol / 2,
-            max_depth=max_depth,
-            depth=depth + 1,
+    @staticmethod
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
+        return (b - a) * (polynom(a) + polynom(b)) / 2
+
+
+class SimpsonSolver(NewtonCoteSolver):
+    description = "∫[a,b] f(x) dx ≈ (b - a) / 6 * (f(a) + 4f((a + b)/2) + f(b))"
+
+    @staticmethod
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
+        mid = (a + b) / 2
+        return (b - a) / 6 * (polynom(a) + 4 * polynom(mid) + polynom(b))
+
+
+class Simpson38Solver(NewtonCoteSolver):
+    description = """
+    Let h = (b - a) / 3,
+    ∫[a,b] f(x) dx ≈ (b - a) / 8 * [f(a) + 3f(a + h) + 3f(a + 2h) + f(b)]
+    """
+
+    @staticmethod
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
+        h = (b - a) / 3
+        x1 = a + h
+        x2 = a + 2 * h
+        return (
+            (b - a) * (polynom(a) + 3 * polynom(x1) + 3 * polynom(x2) + polynom(b)) / 8
         )
-        right_result = cls.integrate(
-            polynom,
-            (mid, b),
-            meta,
-            tol=tol / 2,
-            max_depth=max_depth,
-            depth=depth + 1,
+
+
+class BooleSolver(NewtonCoteSolver):
+    description = """
+    Let h = (b - a) / 4,
+    ∫[a,b] f(x) dx ≈ (b - a) / 90 * [7f(a) + 32f(a + h) + 12f(a + 2h) + 32f(a + 3h) + 7f(b)]
+    """
+
+    @staticmethod
+    def _apply_rule(polynom: Polynom, a: float, b: float) -> float:
+        h = (b - a) / 4
+        x1 = a + h
+        x2 = a + 2 * h
+        x3 = a + 3 * h
+        return (
+            (b - a)
+            / 90
+            * (
+                7 * polynom(a)
+                + 32 * polynom(x1)
+                + 12 * polynom(x2)
+                + 32 * polynom(x3)
+                + 7 * polynom(b)
+            )
         )
 
-        result = left_result + right_result
 
-        # Only update meta once, at root, this cost me 2 hours of my life...
-        if meta is not None and depth == 0:
-            meta.result = result
-            meta.tolerance_achieved = abs(refined - full)
-            meta.is_within_tolerance = abs(refined - full) <= tol
-        if meta is not None:
-            if meta.result is None:
-                meta.result = 0.0
-            meta.result += refined
-            if meta.depth is None:
-                meta.depth = 0
-                meta.depth = max(meta.depth, depth)
+# class MidpointRecursive(IntegralSolver):
+#     @classmethod
+#     def integrate(
+#         cls,
+#         polynom: Polynom,
+#         interval: tuple[float, float],
+#         tol=1e-6,
+#         max_depth=90,
+#         depth=0,
+#         max_reached_depth: list[int] | None = None,
+#     ) -> float:
+#         if max_reached_depth is None:
+#             max_reached_depth = [0]
 
-        return result
+#         max_reached_depth[0] = max(max_reached_depth[0], depth)
+#         a, b = interval
+#         mid = (a + b) / 2
+#         h = b - a
+
+#         # Midpoint rule estimates
+#         full = polynom(mid) * h
+#         left = polynom((a + mid) / 2) * (h / 2)
+#         right = polynom((mid + b) / 2) * (h / 2)
+#         refined = left + right
+
+#         # Stop condition
+#         if abs(refined - full) < tol or depth >= max_depth:
+#             return refined
+
+#         # Recursive subdivision
+#         left_result = cls.integrate(
+#             polynom,
+#             (a, mid),
+#             tol=tol / 2,
+#             max_depth=max_depth,
+#             depth=depth + 1,
+#         )
+#         right_result = cls.integrate(
+#             polynom,
+#             (mid, b),
+#             tol=tol / 2,
+#             max_depth=max_depth,
+#             depth=depth + 1,
+#         )
+
+#         result = left_result + right_result
+
+#         return result
 
 
-@dataclass
-class NumericMPMeta(SolverMeta):
-    n_subintervals: Optional[int] = None
-    n_samples: Optional[int] = None
-    step_size: Optional[float] = None
-    standard_error: Optional[float] = None
+class NewtonCoteMP(IntegralSolver):
+    expected_kwargs = {"n_subintervals", "batch_size"}
 
-
-class NumericMP(IntegralSolver):
     @classmethod
     def integrate(
         cls,
         polynom: Polynom,
         interval: tuple[float, float],
-        meta: Optional[NumericMPMeta],
-        n_samples: int,
-        batch_size: int = 2**10,
+        n_subintervals: int,
+        batch_size: int = 64,  # default batch size
     ) -> float:
-        n_pools = os.cpu_count()
-        if n_pools is None:
-            n_pools = 4
-        n_intervals = int(max(n_samples // batch_size, 1))
+        intervals = cls.partition_interval(interval, n_subintervals)
+
+        batches = [
+            intervals[i : i + batch_size] for i in range(0, len(intervals), batch_size)
+        ]
+
         vpoly = np.vectorize(polynom, otypes=[float])
-        intervals = cls.partition_interval(interval, n_intervals)
-        func_args = [(interval, batch_size, vpoly) for interval in intervals]
+        args = [(batch, vpoly) for batch in batches]
+
+        n_pools = os.cpu_count() or 4
         with mp.Pool(n_pools) as pool:
-            aggregations = pool.starmap(cls.aggregate_interval, func_args)
-        total_n, total_mean, total_stdev = Stats.combine_integrals(aggregations)
+            results = pool.starmap(cls.integrate_batch, args)
 
-        if meta is not None:
-            meta.result = total_mean
-            meta.n_subintervals = n_intervals
-            meta.n_samples = total_n
-            meta.step_size = (interval[1] - interval[0]) / total_n
-            meta.standard_error = total_stdev / math.sqrt(total_n)
-
-        return float(total_mean)
+        return sum(results)
 
     @staticmethod
     def partition_interval(
         interval: tuple[float, float], n: int
     ) -> list[tuple[float, float]]:
-        """
-        retrieved from https://math.stackexchange.com/questions/3812011/dividing-an-interval-into-equal-length-segments-formula
-        """
         a, b = interval
         delta = (b - a) / n
-        intervals = []
-        for i in range(n - 1):
-            intervals.append((a + i * delta, a + (i + 1) * delta))
-        intervals.append((a + (n - 1) * delta, b))
-        return intervals
+        return [(a + i * delta, a + (i + 1) * delta) for i in range(n)]
 
     @staticmethod
-    def aggregate_interval(
-        interval: tuple[float, float],
-        batch_size: int,
-        vfunc: Callable,
-    ):
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
+        raise NotImplementedError("Subclasses must override integrate_interval.")
+
+    @classmethod
+    def integrate_batch(
+        cls,
+        intervals: list[tuple[float, float]],
+        vpoly: Callable[[float], float],
+    ) -> float:
+        return sum(cls.integrate_interval(interval, vpoly) for interval in intervals)
+
+
+class MidpointMP(NewtonCoteMP):
+    @staticmethod
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
         a, b = interval
-        step_size = (b - a) / batch_size
-        mid_points = a + (np.arange(batch_size) + 0.5) * step_size
-        Y = vfunc(mid_points) * step_size  # Multiply with step_size to get area
-        result = Stats.compute_mean_M2(Y)
-
-        return result
+        mid = (a + b) / 2
+        return (b - a) * vpoly(mid)
 
 
-@dataclass
-class MonteCarloMeta(SolverMeta):
-    n_samples: Optional[int] = None
-    standard_error: Optional[float] = None
+class TrapezoidalMP(NewtonCoteMP):
+    @staticmethod
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
+        a, b = interval
+        return (b - a) * (vpoly(a) + vpoly(b)) / 2
+
+
+class SimpsonMP(NewtonCoteMP):
+    @staticmethod
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
+        a, b = interval
+        m = (a + b) / 2
+        return (b - a) * (vpoly(a) + 4 * vpoly(m) + vpoly(b)) / 6
+
+
+class Simpson38MP(NewtonCoteMP):
+    @staticmethod
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
+        a, b = interval
+        h = (b - a) / 3
+        x1, x2 = a + h, a + 2 * h
+        return (b - a) * (vpoly(a) + 3 * vpoly(x1) + 3 * vpoly(x2) + vpoly(b)) / 8
+
+
+class BooleMP(NewtonCoteMP):
+    @staticmethod
+    def integrate_interval(
+        interval: tuple[float, float], vpoly: Callable[[float], float]
+    ) -> float:
+        a, b = interval
+        h = (b - a) / 4
+        x1 = a + h
+        x2 = a + 2 * h
+        x3 = a + 3 * h
+        return (
+            (b - a)
+            * (
+                7 * vpoly(a)
+                + 32 * vpoly(x1)
+                + 12 * vpoly(x2)
+                + 32 * vpoly(x3)
+                + 7 * vpoly(b)
+            )
+            / 90
+        )
 
 
 class MonteCarlo(IntegralSolver):
+    expected_kwargs = {"n_samples", "_seed"}
+
     @staticmethod
     def integrate(
         polynom: Polynom,
         interval: tuple[float, float],
-        meta: Optional[MonteCarloMeta],
         n_samples: int,
         _seed: int = 42,
     ) -> float:
@@ -214,9 +293,58 @@ class MonteCarlo(IntegralSolver):
         _mean = sum(samples) / n_samples
         result = (b - a) * _mean
         standard_err = (b - a) * statistics.stdev(samples) / math.sqrt(n_samples)
-
-        if meta is not None:
-            meta.result = result
-            meta.n_samples = n_samples
-            meta.standard_error = float(standard_err)
         return result
+
+
+# There is a way of doing this with inheritance properties, but I want it to be explicitly written for better readability.
+SOLVER_GROUP_MAP = {
+    NewtonCoteSolver: [
+        MidpointSolver,
+        TrapezoidalSolver,
+        SimpsonSolver,
+        Simpson38Solver,
+        BooleSolver,
+    ],
+    NewtonCoteMP: [
+        MidpointMP,
+        TrapezoidalMP,
+        SimpsonMP,
+        Simpson38MP,
+        BooleMP,
+    ],
+    MonteCarlo: [
+        MonteCarlo,
+    ],
+    # IntegralSolver: [
+    #     MidpointRecursive,
+    # ],
+}
+
+
+class SolverName(StrEnum):
+    MIDPOINT = enum.auto()
+    TRAPEZ = enum.auto()
+    SIMPSON = enum.auto()
+    SIMPSON38 = enum.auto()
+    BOOLE = enum.auto()
+    MIDPOINT_MP = "MIDPOINT-MP"
+    TRAPEZ_MP = "TRAPEZ-MP"
+    SIMPSON_MP = "SIMPSON-MP"
+    SIMPSON382_MP = "SIMPSON382-MP"
+    BOOLE_MP = "BOOLE-MP"
+    # MIDPOINT_RECURSIVE = enum.auto()
+
+
+SOLVER_MAP = {
+    SolverName.MIDPOINT: MidpointSolver,
+    SolverName.TRAPEZ: TrapezoidalSolver,
+    SolverName.SIMPSON: SimpsonSolver,
+    SolverName.SIMPSON38: Simpson38Solver,
+    SolverName.BOOLE: BooleSolver,
+    SolverName.MIDPOINT_MP: MidpointMP,
+    SolverName.TRAPEZ_MP: TrapezoidalMP,
+    SolverName.SIMPSON_MP: SimpsonMP,
+    SolverName.SIMPSON38: Simpson38MP,
+    SolverName.BOOLE_MP: BooleMP,
+    # SolverName.MIDPOINT_RECURSIVE: MidpointRecursive,
+}

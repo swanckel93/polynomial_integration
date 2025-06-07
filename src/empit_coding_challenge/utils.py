@@ -1,6 +1,8 @@
+import timeit
 import time
 from inspect import signature
 import numpy as np
+from .solvers import Polynom, IntegralSolver
 
 
 class Stats:
@@ -86,3 +88,51 @@ class Timer:
             return result
 
         return wrapper
+
+
+class AdaptiveIntegration:
+    @staticmethod
+    def refine(
+        polynom: Polynom,
+        solver: IntegralSolver,
+        interval: tuple[float, float],
+        analytic_solution: float,
+        tolerance: float,
+        timeout: float,
+        solver_kwargs: dict,
+    ) -> tuple[float, float, float, float, bool]:
+        start_time = timeit.default_timer()
+        elapsed = 0.0
+        curr_n = solver_kwargs["n_subintervals"]
+        result = None
+        is_success = False
+        error = None
+        while elapsed < timeout:
+            result = polynom.integrate(interval, solver, **solver_kwargs)
+            error = ErrorCalculations.get_relative_error(analytic_solution, result)
+            elapsed = timeit.default_timer() - start_time
+            if error < tolerance:
+                is_success = True
+                break
+            print(" " * 4 + f"Partial Result    = {result:.6f}")
+            print(" " * 4 + f"Partial Error     = {error:.2e}%")
+            print(" " * 4 + f"Number Of Samples = {curr_n:.1e}")
+            print(" " * 4 + f"Time Elapsed      = {elapsed:.3f}s")
+            print()
+            curr_n *= 10
+            if "n_samples" in solver.expected_kwargs:
+                solver_kwargs["n_samples"] = curr_n
+            if "n_subintervals" in solver.expected_kwargs:
+                solver_kwargs["n_subintervals"] = curr_n
+
+        assert result is not None
+        assert error is not None
+
+        return result, error, elapsed, curr_n, is_success
+
+
+class ErrorCalculations:
+    @staticmethod
+    def get_relative_error(target_value: float, current_value: float) -> float:
+        assert target_value is not None
+        return abs(current_value - target_value) / target_value * 100
