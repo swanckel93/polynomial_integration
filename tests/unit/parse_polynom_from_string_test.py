@@ -2,6 +2,7 @@ import pytest
 from src.polynomials.polynom import Polynom
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "input_str,expected",
     [
@@ -16,6 +17,7 @@ def test_parse_from_string_valid(input_str, expected):
     assert result == expected
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "input_str",
     [

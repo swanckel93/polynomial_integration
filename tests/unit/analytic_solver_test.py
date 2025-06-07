@@ -3,6 +3,7 @@ from src.polynomials.polynom import Polynom
 from src.polynomials.solvers import AnalyticSolver
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "coeffs, interval, expected",
     [

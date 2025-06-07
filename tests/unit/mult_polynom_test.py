@@ -2,6 +2,7 @@ import pytest
 from src.polynomials.polynom import Polynom
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "p1_str, p2_str, expected",
     [
