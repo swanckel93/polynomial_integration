@@ -25,8 +25,8 @@ def create_integration_plot(integration_run: IntegrationRun, save_path: Path) ->
     # Plot each successful solver
     color_idx = 0
     for solver in integration_run.solver_results:
-        if not solver.success or not solver.partial_results:
-            continue
+        # if not solver.success or not solver.partial_results:
+        #     continue
 
         # Collect all time and error points from partial results
         times = [partial.time_elapsed for partial in solver.partial_results]

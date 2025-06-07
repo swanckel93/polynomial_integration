@@ -6,6 +6,23 @@ from pathlib import Path
 import re
 
 
+class IntegrationRunJsonSerializer(json.JSONEncoder):
+    """Custom JSON encoder to handle special data types."""
+
+    def default(self, obj):
+        if isinstance(obj, (bool, int, float, str, type(None))):
+            return obj
+        elif isinstance(obj, list):
+            return [self.default(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {key: self.default(value) for key, value in obj.items()}
+        elif hasattr(obj, "__dict__"):
+            return self.default(obj.__dict__)
+        else:
+            # Convert to string as fallback
+            return str(obj)
+
+
 @dataclass
 class PartialResult:
     """Represents a partial result during adaptive integration refinement."""
@@ -72,7 +89,7 @@ class IntegrationRun:
         """Save the integration run to JSON file."""
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w") as f:
-            json.dump(self.to_dict(), f, indent=2)
+            json.dump(self.to_dict(), f, indent=2, cls=IntegrationRunJsonSerializer)
 
     @classmethod
     def load_from_json(cls, filepath: Path) -> "IntegrationRun":

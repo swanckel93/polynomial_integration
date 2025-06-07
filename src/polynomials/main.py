@@ -310,7 +310,7 @@ def integrate(
                 final_error=final_error,
                 total_time=total_time,
                 final_samples=final_samples,
-                within_tolerance=is_success,
+                within_tolerance=final_error <= tol,
                 success=is_success,
                 error_message=None,
             )
