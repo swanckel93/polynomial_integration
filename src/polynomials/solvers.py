@@ -1,7 +1,5 @@
-from .polynom import Polynom, IntegralSolver
+from polynomials.polynom import Polynom, IntegralSolver
 import random
-import statistics
-import math
 import multiprocessing as mp
 import os
 import numpy as np
@@ -115,7 +113,8 @@ class BooleSolver(NewtonCoteSolver):
         )
 
 
-# Recursive function works. But not included in the CLI. properties are too different and would make the cli hacky.
+# Recursive function works. But not included in the CLI.
+# Class is too different -> Leads to polymorphism.
 class MidpointRecursive(IntegralSolver):
     @classmethod
     def integrate(
@@ -175,16 +174,25 @@ class NewtonCoteMP(IntegralSolver):
         polynom: Polynom,
         interval: tuple[float, float],
         n_subintervals: int,
-        batch_size: int = 64,  # default batch size
+        batch_size: int = 64,
     ) -> float:
-        intervals = cls.partition_interval(interval, n_subintervals)
+        # MEMORY FIX: Don't create all intervals upfront
+        # Instead, pass parameters to workers who generate intervals on-demand
 
-        batches = [
-            intervals[i : i + batch_size] for i in range(0, len(intervals), batch_size)
+        n_batches = (n_subintervals + batch_size - 1) // batch_size
+
+        # Create arguments for each batch - just the parameters, not the actual intervals
+        args = [
+            (
+                interval,
+                n_subintervals,
+                i * batch_size,
+                min(batch_size, n_subintervals - i * batch_size),
+                polynom,
+            )
+            for i in range(n_batches)
         ]
 
-        vpoly = np.vectorize(polynom, otypes=[float])
-        args = [(batch, vpoly) for batch in batches]
         if os.cpu_count() is None:
             n_pools = 4
         else:
@@ -192,31 +200,39 @@ class NewtonCoteMP(IntegralSolver):
             n_pools = int(cpu_count * 0.75)  # type: ignore
 
         with mp.Pool(n_pools) as pool:
-            results = pool.starmap(cls.integrate_batch, args)
+            results = pool.starmap(cls.integrate_batch_on_demand, args)
 
         return sum(results)
 
-    @staticmethod
-    def partition_interval(
-        interval: tuple[float, float], n: int
-    ) -> list[tuple[float, float]]:
+    @classmethod
+    def integrate_batch_on_demand(
+        cls,
+        interval: tuple[float, float],
+        total_n: int,
+        start_idx: int,
+        count: int,
+        polynom: Polynom,
+    ) -> float:
+        """Generate intervals on-demand within each worker process"""
         a, b = interval
-        delta = (b - a) / n
-        return [(a + i * delta, a + (i + 1) * delta) for i in range(n)]
+        delta = (b - a) / total_n
+        vpoly = np.vectorize(polynom, otypes=[float])
+
+        result = 0.0
+        # Generate each interval only when needed
+        for i in range(start_idx, start_idx + count):
+            sub_a = a + i * delta
+            sub_b = a + (i + 1) * delta
+            # Use interval immediately, then discard
+            result += cls.integrate_interval((sub_a, sub_b), vpoly)
+
+        return result
 
     @staticmethod
     def integrate_interval(
         interval: tuple[float, float], vpoly: Callable[[float], float]
     ) -> float:
         raise NotImplementedError("Subclasses must override integrate_interval.")
-
-    @classmethod
-    def integrate_batch(
-        cls,
-        intervals: list[tuple[float, float]],
-        vpoly: Callable[[float], float],
-    ) -> float:
-        return sum(cls.integrate_interval(interval, vpoly) for interval in intervals)
 
 
 class MidpointMP(NewtonCoteMP):
@@ -326,30 +342,9 @@ class MonteCarlo(IntegralSolver):
         samples = [polynom(random.uniform(a, b)) for _ in range(int(n_samples))]
         _mean = sum(samples) / n_samples
         result = (b - a) * _mean
-        standard_err = (b - a) * statistics.stdev(samples) / math.sqrt(n_samples)
+        # no need for standard_err. even tho its a nice metric, It leads to polymorphism -> scratch that.
+        # standard_err = (b - a) * statistics.stdev(samples) / math.sqrt(n_samples)
         return result
-
-
-# There is a way of doing this with inheritance properties, but I want it to be explicitly written for better readability.
-SOLVER_GROUP_MAP = {
-    NewtonCoteSolver: [
-        MidpointSolver,
-        TrapezoidalSolver,
-        SimpsonSolver,
-        Simpson38Solver,
-        BooleSolver,
-    ],
-    NewtonCoteMP: [
-        MidpointMP,
-        TrapezoidalMP,
-        SimpsonMP,
-        Simpson38MP,
-        BooleMP,
-    ],
-    MonteCarlo: [
-        MonteCarlo,
-    ],
-}
 
 
 class SolverName(StrEnum):

@@ -1,7 +1,3 @@
-from typing import Self
-from dataclasses import dataclass
-
-
 class Polynom(list):
     def __init__(self, coeffs):
         # TODO This could be better. Try to allow list and str only, rest raises Value Error.
