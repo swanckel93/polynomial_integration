@@ -1,0 +1,27 @@
+name: Build and Release
+on:
+  release:
+    types: [published, prereleased]
+  workflow_dispatch:
+  
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        pip install poetry wheel
+        poetry install
+    - name: Build wheel
+      run: |
+        pip wheel . --no-deps -w dist --build-option="--plat-name=linux_x86_64"
+    - name: Upload to release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*
