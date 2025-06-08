@@ -30,7 +30,7 @@ from helpers.plotting import create_integration_plot
 console = get_console()
 app = typer.Typer(
     name="poly",
-    help="🧮 Polynomial operations CLI tool with beautiful output",
+    help="Polynomial operations CLI tool with beautiful output",
     rich_markup_mode="rich",
 )
 
@@ -43,7 +43,7 @@ def show_polynom(
     )
 ):
     """
-    📊 Display a polynomial from coefficients.
+    Display a polynomial from coefficients.
 
     Renders a polynomial in a beautiful format from space-separated coefficients.
     """
@@ -63,7 +63,7 @@ def add_polynom(
     ),
 ):
     """
-    ➕ Add two polynomials: P₁ + P₂
+    Add two polynomials: P₁ + P₂
 
     Displays the polynomials and their sum in a beautifully aligned format.
     """
@@ -87,7 +87,7 @@ def subtract_polynom(
     ),
 ):
     """
-    ➖ Subtract two polynomials: P₁ - P₂
+    Subtract two polynomials: P₁ - P₂
 
     Displays the polynomials and their difference in a beautifully aligned format.
     """
@@ -111,7 +111,7 @@ def multiply_polynom(
     ),
 ):
     """
-    ✖️ Multiply two polynomials: P₁ × P₂
+    Multiply two polynomials: P₁ × P₂
 
     Displays the polynomials and their product in a beautifully aligned format.
     """
@@ -150,7 +150,7 @@ def integrate(
     ),
 ):
     """
-    🧮 Integrate polynomials using numerical methods.
+    Integrate polynomials using numerical methods.
 
     Integrates a polynomial over a specified interval using various numerical
     integration methods with beautiful progress tracking and results display.
@@ -191,7 +191,7 @@ def integrate(
             if solver_name.upper() in valid_solver_names:
                 solvers_to_run.append(valid_solver_names[solver_name.upper()])
             else:
-                console.print(f"[red]❌ Unknown solver: {solver_name}[/red]")
+                console.print(f"[red]Unknown solver: {solver_name}[/red]")
                 console.print(
                     f"[yellow]Available solvers: {', '.join(valid_solver_names.keys())}[/yellow]"
                 )
@@ -203,7 +203,7 @@ def integrate(
     console.print(
         Panel(
             header_content,
-            title="🧮 Integration Task",
+            title="Integration Task",
             border_style="blue",
             padding=(1, 2),
         )
@@ -212,11 +212,11 @@ def integrate(
     analytic_solution = AnalyticSolver.integrate(poly, interval_tuple)
     integration_run.analytic_solution = analytic_solution
     console.print(
-        f"[bold green]📐 Analytic Solution: {analytic_solution:.8f}[/bold green]\n"
+        f"[bold green]Analytic Solution: {analytic_solution:.8f}[/bold green]\n"
     )
 
     # TODO: Styling could be externalized for better mantainability.
-    results_table = Table(title="[bold not italic]📊[/] Integration Results Summary")
+    results_table = Table(title="[bold not italic]Integration Results Summary")
     results_table.add_column("Solver", style="cyan", no_wrap=True)
     results_table.add_column("Result", style="green", justify="right")
     results_table.add_column("Error %", style="yellow", justify="right")
@@ -232,9 +232,7 @@ def integrate(
         total_solvers += 1
         solver_class = SOLVER_MAP.get(solver_name)
         if solver_class is None:
-            console.print(
-                f"[red]❌ Solver {solver_name} not implemented. Skipping.[/red]"
-            )
+            console.print(f"[red]Solver {solver_name} not implemented. Skipping.[/red]")
             # Add failed solver result to data
             integration_run.solver_results.append(
                 SolverResult(
@@ -255,7 +253,7 @@ def integrate(
         # Display current solver info
         solver_panel = Panel(
             f"[bold]{solver_class.description.strip()}[/bold]",
-            title=f"⚙️ {solver_name.value.upper()}",
+            title=f"{solver_name.value.upper()}",
             border_style="green",
             padding=(0, 1),
         )
@@ -328,7 +326,7 @@ def integrate(
             )
 
         except Exception as e:
-            console.print(f"[red]❌ Error running {solver_name}: {str(e)}[/red]")
+            console.print(f"[red]Error running {solver_name}: {str(e)}[/red]")
 
             solver_result = SolverResult(
                 name=solver_name.value,
@@ -366,7 +364,7 @@ def integrate(
         failed = total_solvers - successful_solvers
         summary_text += f"\n[red]❌ {failed} solvers failed or timed out[/red]"
 
-    console.print(Panel(summary_text, title="📈 Summary", border_style="blue"))
+    console.print(Panel(summary_text, title="Summary", border_style="blue"))
 
     # Dumping the json
     if save_data:
@@ -376,9 +374,9 @@ def integrate(
 
         try:
             integration_run.save_to_json(filepath)
-            console.print(f"\n[green]💾 Data saved to: {filepath}[/green]")
+            console.print(f"\n[green]Data saved to: {filepath}[/green]")
         except Exception as e:
-            console.print(f"\n[red]❌ Failed to save data: {str(e)}[/red]")
+            console.print(f"\n[red]Failed to save data: {str(e)}[/red]")
 
 
 @app.command("plot")
@@ -391,7 +389,7 @@ def plot(
     ),
 ):
     """
-    📊 Create performance plots from integration run data.
+    Create performance plots from integration run data.
 
     Loads integration results from JSON file and creates a performance plot
     showing error vs time for all solvers.
@@ -406,7 +404,7 @@ def plot(
     # Load data
     json_path = data_dir / json_filename
     if not json_path.exists():
-        console.print(f"[red]❌ JSON file not found: {json_path}[/red]")
+        console.print(f"[red]JSON file not found: {json_path}[/red]")
         # List available files
         if data_dir.exists():
             available_files = list(data_dir.glob("*.json"))
@@ -418,9 +416,9 @@ def plot(
 
     try:
         integration_run = IntegrationRun.load_from_json(json_path)
-        console.print(f"[green]✅ Loaded data from: {json_path}[/green]")
+        console.print(f"[green]Loaded data from: {json_path}[/green]")
     except Exception as e:
-        console.print(f"[red]❌ Failed to load JSON: {str(e)}[/red]")
+        console.print(f"[red]Failed to load JSON: {str(e)}[/red]")
         raise typer.Exit(1)
 
     final_output_path: Path
@@ -435,7 +433,7 @@ def plot(
     # Create plot
     try:
         create_integration_plot(integration_run, final_output_path)
-        console.print(f"[green]📊 Plot saved to: {final_output_path}[/green]")
+        console.print(f"[green]Plot saved to: {final_output_path}[/green]")
 
         # Display summary
         successful_solvers = sum(
@@ -452,17 +450,17 @@ def plot(
         )
         summary_text += f"[bold blue]Solvers:[/bold blue] {successful_solvers}/{total_solvers} successful"
 
-        console.print(Panel(summary_text, title="📈 Plot Summary", border_style="blue"))
+        console.print(Panel(summary_text, title="Plot Summary", border_style="blue"))
 
     except Exception as e:
-        console.print(f"[red]❌ Failed to create plot: {str(e)}[/red]")
+        console.print(f"[red]Failed to create plot: {str(e)}[/red]")
         raise typer.Exit(1)
 
 
 @app.command("list-runs")
 def list_runs():
     """
-    📋 List available integration run JSON files.
+    List available integration run JSON files.
 
     Shows all available JSON files in the ./data/ directory.
     """
@@ -470,17 +468,17 @@ def list_runs():
 
     if not data_dir.exists():
         console.print(
-            "[yellow]📁 No data directory found. Run some integrations with --save-data first.[/yellow]"
+            "[yellow]No data directory found. Run some integrations with --save-data first.[/yellow]"
         )
         return
 
     json_files = list(data_dir.glob("*.json"))
 
     if not json_files:
-        console.print("[yellow]📁 No JSON files found in ./data/ directory.[/yellow]")
+        console.print("[yellow]No JSON files found in ./data/ directory.[/yellow]")
         return
 
-    console.print(f"[green]📋 Found {len(json_files)} integration run(s):[/green]\n")
+    console.print(f"[green]Found {len(json_files)} integration run(s):[/green]\n")
 
     for json_file in sorted(json_files):
         try:
@@ -491,7 +489,7 @@ def list_runs():
             )
             total_solvers = len(integration_run.solver_results)
 
-            console.print(f"[cyan]📊 {json_file.name}[/cyan]")
+            console.print(f"[cyan]{json_file.name}[/cyan]")
             console.print(f"   Polynomial: {integration_run.polynomial_string}")
             console.print(
                 f"   Interval: [{integration_run.interval_start}, {integration_run.interval_end}]"
@@ -504,7 +502,7 @@ def list_runs():
             console.print()
 
         except Exception as e:
-            console.print(f"[red]❌ Error reading {json_file.name}: {str(e)}[/red]")
+            console.print(f"[red]Error reading {json_file.name}: {str(e)}[/red]")
 
 
 def main():
@@ -513,10 +511,10 @@ def main():
     try:
         app()
     except KeyboardInterrupt:
-        console.print("\n[yellow]⚠️ Operation cancelled by user[/yellow]")
+        console.print("\n[yellow]Operation cancelled by user[/yellow]")
         raise typer.Exit(0)
     except Exception as e:
-        console.print(f"[red]💥 Unexpected error: {str(e)}[/red]")
+        console.print(f"[red]Unexpected error: {str(e)}[/red]")
         raise typer.Exit(1)
 
 
