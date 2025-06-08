@@ -31,6 +31,13 @@ jobs:
     - name: List built files
       run: ls -la dist/
     
+    - name: Get wheel filename
+      id: wheel-name
+      run: |
+        WHEEL_FILE=$(ls dist/*.whl | head -1)
+        echo "filepath=$WHEEL_FILE" >> $GITHUB_OUTPUT
+        echo "filename=$(basename $WHEEL_FILE)" >> $GITHUB_OUTPUT
+    
     - name: Upload to release
       if: github.event_name == 'release'
       uses: actions/upload-release-asset@v1
@@ -38,8 +45,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/polynomials-0.1.0-py3-none-linux_x86_64.whl
-        asset_name: polynomials-0.1.0-py3-none-linux_x86_64.whl
+        asset_path: ${{ steps.wheel-name.outputs.filepath }}
+        asset_name: ${{ steps.wheel-name.outputs.filename }}
         asset_content_type: application/zip
     
     - name: Upload artifacts (for manual testing)
