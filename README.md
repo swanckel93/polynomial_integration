@@ -53,7 +53,10 @@ poetry build
 pip install dist/*.whl
 ```
 Please keep in mind that all installation options were only tested on Linux Debian. It is not guaranteed to work on other os.
+
 ## Usage
+
+**Important Note**: When using negative numbers as arguments (like negative interval bounds), you need to use the `--` separator to prevent the CLI parser from interpreting them as flags. Place all options before `--` and the actual arguments after it.
 
 ```bash
 # Display a polynomial
@@ -62,7 +65,10 @@ poly display "1 2 3"  # Represents 1 + 2x + 3x²
 # Add polynomials
 poly add "1 2" "0 1 3"  # (1 + 2x) + (x + 3x²)
 
-# Integrate with tolerance
+# Integrate with tolerance (using -- separator for negative intervals)
+poly integrate --tolerance 1e-6 --save-data -- "1 0 -1" -6 2
+
+# Integrate with positive intervals (no -- needed)
 poly integrate "1 0 -1" 0 2 --tolerance 1e-6 --save-data
 
 # Generate performance plots
@@ -82,8 +88,10 @@ Available solvers:
 ### Integration
 
 ```bash
-poly integrate [COEFFICIENTS] [INTERVAL_A] [INTERVAL_B] [OPTIONS]
+poly integrate [OPTIONS] [--] [COEFFICIENTS] [INTERVAL_A] [INTERVAL_B]
 ```
+
+**Syntax Note**: Use `--` before the arguments when dealing with negative intervals to avoid parser conflicts.
 
 Options:
 - `--solver, -s`: Specify solvers (can use multiple times)
@@ -126,6 +134,19 @@ This integrates `f(x) = 1 + x²` over `[-1, 1]` with tolerance `1e-4`:
 This integrates `f(x) = 1 + 3x² + 5x³ + 7x⁴ + 9x⁵ + 9x⁶ - 200x⁷ - 40x⁸ - 25x⁹ + 9x¹⁰` over `[-128, 128]` with tolerance `1e-11`:
 
 ![Long Integration Results](examples/sample_data/integration_long.png)
+
+### Command Examples with Negative Intervals
+
+```bash
+# Integrate x² - 1 from -2 to 3 with high tolerance
+poly integrate --tolerance 1e-8 --save-data -- "0 0 1 -1" -2 3
+
+# Multiple solvers with negative interval
+poly integrate --solver SIMPSON --solver TRAPEZ --tolerance 1e-6 -- "1 2 -1" -5 1
+
+# Monte Carlo integration with negative bounds
+poly integrate --solver MONTECARLO --seed 123 --tolerance 1e-4 -- "1 0 -1" -10 10
+```
 
 ### Other Examples
 ```bash
