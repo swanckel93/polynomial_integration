@@ -6,12 +6,15 @@
 # Distribution / packaging
 build/
 dist/*
+plots/*
+data/*
+!dist/.gitkeep
+!plots/.gitkeep
+!data/.gitkeep
+
 *.egg-info/
 *.egg
 *.whl
-
-data/*
-plots/*
 
 # Virtual environments
 .venv/
