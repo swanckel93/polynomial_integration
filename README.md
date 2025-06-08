@@ -52,6 +52,7 @@ poetry build
 # Install the built wheel (replace with actual filename from dist/)
 pip install dist/*.whl
 ```
+Please keep in mind that all installation options were only tested on Linux Debian. It is not guaranteed to work on other os.
 ## Usage
 
 ```bash
