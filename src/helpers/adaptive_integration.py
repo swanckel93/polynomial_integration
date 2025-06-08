@@ -28,7 +28,7 @@ class AdaptiveIntegration:
 
         while elapsed < timeout:
             result = polynom.integrate(interval, solver, **solver_kwargs)
-            error = ErrorCalculations.get_relative_error(analytic_solution, result)
+            error = ErrorCalculations.get_absolute_error(analytic_solution, result)
             elapsed = timeit.default_timer() - start_time
 
             # Capture partial result

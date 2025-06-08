@@ -85,7 +85,7 @@ def create_integration_plot(integration_run: IntegrationRun, save_path: Path) ->
 
     # Labels and title
     ax.set_xlabel("Time [s]", fontsize=12)
-    ax.set_ylabel("Error [%]", fontsize=12)
+    ax.set_ylabel("Error", fontsize=12)
 
     # Determine polynomial order for title
     poly_order = len(integration_run.polynomial_coefficients) - 1
@@ -130,5 +130,5 @@ def create_integration_plot(integration_run: IntegrationRun, save_path: Path) ->
         ax.set_ylim(1e-10, 1e2)
 
     # Save the plot
-    plt.savefig(save_path, dpi=600, bbox_inches="tight")
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()  # Close the figure to free memory
