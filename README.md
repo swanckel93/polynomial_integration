@@ -14,11 +14,30 @@ A Python CLI tool for polynomial operations and numerical integration with visua
 
 ## Installation
 
-Install directly from the pre-built wheel:
+### From Pre-built Wheel (Recommended)
+
+Download the latest wheel from the [releases page](https://github.com/swanckel93/polynomial_integration/releases) and install e.g. for release v0.1.0:
+```bash
+pip install polynomials-0.1.0-py3-none-any.whl
+```
+
+**Note for Externally Managed Environments**: If you're on Ubuntu/Debian or similar systems with externally managed Python environments, create a virtual environment first:
 
 ```bash
-pip install dist/polynomials-0.1.0-py3-none-any.whl
+# Create a virtual environment in your current directory
+python3 -m venv venv
+
+# Activate it
+source venv/bin/activate
+
+# Install the wheel
+pip install polynomials-0.1.0-py3-none-any.whl
+
+# When done, deactivate with:
+# deactivate
 ```
+
+### From Source
 
 Or build from source:
 
@@ -29,9 +48,10 @@ curl -sSL https://install.python-poetry.org | python3 -
 # Install dependencies and build
 poetry install
 poetry build
-pip install dist/polynomials-0.1.0-py3-none-any.whl
-```
 
+# Install the built wheel (replace with actual filename from dist/)
+pip install dist/*.whl
+```
 ## Usage
 
 ```bash
